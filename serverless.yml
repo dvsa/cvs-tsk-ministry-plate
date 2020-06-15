@@ -1,0 +1,45 @@
+service: cvs-tsk-ministry-plate
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  tracing: true # enable tracing
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "xray:PutTraceSegments"
+        - "xray:PutTelemetryRecords"
+      Resource:
+        - "*"
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-plugin-tracing
+
+functions:
+  main:
+    handler: src/handler.handler
+    events:
+    - sqs:
+        arn: arn:aws:sqs:region:XXXXXX:ministry-plate-q
+        batchSize: 10
+
+resources:
+  Resources:
+    CertBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-cert
+    SignatureBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-signature
+
+custom:
+  s3:
+    host: s3
+    port: 7000
+    directory: /tmp
+  serverless-offline:
+    port: 3011
